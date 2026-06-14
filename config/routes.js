@@ -9,6 +9,7 @@ const articles = require('../app/controllers/articles');
 const comments = require('../app/controllers/comments');
 const tags = require('../app/controllers/tags');
 const auth = require('./middlewares/authorization');
+const mongoose = require('mongoose');
 
 /**
  * Route middlewares
@@ -27,6 +28,14 @@ const fail = {
 
 module.exports = function(app, passport) {
   const pauth = passport.authenticate.bind(passport);
+
+  app.get('/healthz', function(req, res) {
+    const ready = mongoose.connection.readyState === 1;
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ok' : 'degraded',
+      mongodbReadyState: mongoose.connection.readyState
+    });
+  });
 
   // user routes
   app.get('/login', users.login);

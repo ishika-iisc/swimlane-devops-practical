@@ -5,3 +5,7 @@ Makefile
 .DS_Store
 .env
 data
+.terraform/
+terraform/**/.terraform/
+*.tfstate
+*.tfstate.*

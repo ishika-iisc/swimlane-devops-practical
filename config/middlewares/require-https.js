@@ -4,6 +4,8 @@
 // https://stackoverflow.com/a/31144924
 
 module.exports = function requireHTTPS(req, res, next) {
+  if (req.path === '/healthz') return next();
+
   // The 'x-forwarded-proto' check is for Heroku
   if (
     !req.secure &&

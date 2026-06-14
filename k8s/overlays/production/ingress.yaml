@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: swimlane-app
+  labels:
+    app.kubernetes.io/name: swimlane-devops-practical
+    app.kubernetes.io/component: web
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - swimlane.example.com
+      secretName: swimlane-tls
+  rules:
+    - host: swimlane.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: swimlane-app
+                port:
+                  name: http

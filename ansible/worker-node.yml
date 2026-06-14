@@ -1,0 +1,45 @@
+- name: Prepare Kubernetes worker node base packages
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install NTP and Kubernetes prerequisites on Debian family nodes
+      ansible.builtin.apt:
+        name:
+          - chrony
+          - ca-certificates
+          - curl
+          - gnupg
+          - iptables
+          - socat
+          - conntrack
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Install NTP and Kubernetes prerequisites on RedHat family nodes
+      ansible.builtin.yum:
+        name:
+          - chrony
+          - ca-certificates
+          - curl
+          - iptables
+          - socat
+          - conntrack-tools
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure chrony is enabled and running
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure chrony is enabled and running on Debian
+      ansible.builtin.service:
+        name: chrony
+        state: started
+        enabled: true
+      when: ansible_os_family == "Debian"

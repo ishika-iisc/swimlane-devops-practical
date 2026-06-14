@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.git
+.env
+.DS_Store
+coverage
+data
+docs/screenshots
+terraform/**/.terraform
+terraform/**/*.tfstate*

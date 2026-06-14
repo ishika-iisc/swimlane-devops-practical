@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - app-configmap.yaml
+  - app-serviceaccount.yaml
+  - app-deployment.yaml
+  - app-service.yaml
+  - app-hpa.yaml
+  - app-pdb.yaml
+  - mongo-configmap.yaml
+  - mongo-service.yaml
+  - mongo-statefulset.yaml
+  - mongo-pdb.yaml
+  - networkpolicy.yaml
+
+secretGenerator:
+  - name: mongodb-credentials
+    literals:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=change-me-root
+      - MONGO_APP_DATABASE=swimlane
+      - MONGO_APP_USERNAME=swimlane
+      - MONGO_APP_PASSWORD=change-me-app
+      - MONGODB_URL=mongodb://swimlane:change-me-app@mongodb:27017/swimlane?authSource=swimlane
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: swimlane-devops-practical

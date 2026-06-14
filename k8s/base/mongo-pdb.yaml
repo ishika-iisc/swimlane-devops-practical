@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mongodb
+  labels:
+    app.kubernetes.io/name: swimlane-devops-practical
+    app.kubernetes.io/component: mongodb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: swimlane-devops-practical
+      app.kubernetes.io/component: mongodb
