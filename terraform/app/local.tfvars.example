@@ -1,0 +1,12 @@
+# Use this with a local kind or Docker Desktop Kubernetes cluster after building
+# the image locally.
+
+kube_context           = "kind-swimlane"
+namespace              = "swimlane"
+node_env               = "development"
+app_image              = "swimlane-devops-practical:local"
+app_image_pull_policy  = "Never"
+mongo_root_password    = "change-me-root"
+mongo_app_password     = "change-me-app"
+enable_ingress         = false
+enable_network_policy  = true

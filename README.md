@@ -1,13 +1,14 @@
 # Swimlane DevOps Practical
 
-This repository dockerizes the Swimlane DevOps practical app and includes Kubernetes, Kustomize, and Terraform assets to deploy it with MongoDB.
+This repository dockerizes the Swimlane DevOps practical app and includes Terraform assets to create the Kubernetes infrastructure and deploy the app with MongoDB.
 
 ## What is included
 
 - `Dockerfile` for the Node.js application.
 - `docker-compose.yml` for local app plus MongoDB validation.
-- `k8s/base` and `k8s/overlays` for Kustomize deployment.
 - `terraform/eks` for a multi-AZ Amazon EKS cluster.
+- `terraform/app` for Terraform-managed Kubernetes resources: app Deployment, MongoDB StatefulSet, Services, HPA, PDBs, NetworkPolicies, and optional Ingress.
+- `k8s/base` and `k8s/overlays` as Kustomize reference manifests.
 - Optional `ansible` and `packer` examples for worker image preparation.
 - `docs/architecture.md` with the cluster and high-availability notes.
 
@@ -27,7 +28,7 @@ Clean up:
 docker compose down -v
 ```
 
-## Local Kubernetes deployment
+## Local Kubernetes deployment with Terraform
 
 Use Docker Desktop Kubernetes or kind. If using kind:
 
@@ -35,10 +36,20 @@ Use Docker Desktop Kubernetes or kind. If using kind:
 kind create cluster --config kind/swimlane-cluster.yaml
 ```
 
-Build and deploy:
+Build the local image:
 
 ```sh
-./scripts/deploy-local.sh
+docker build -t swimlane-devops-practical:local .
+```
+
+Deploy the application and MongoDB with Terraform:
+
+```sh
+cd terraform/app
+# If you are not using the kind cluster above, edit kube_context in local.tfvars.example.
+terraform init
+terraform apply \
+  -var-file=local.tfvars.example
 ```
 
 HPA objects require the Kubernetes metrics API. Docker Desktop and kind do not always install metrics-server by default, so `kubectl get hpa` may show `<unknown>` metrics until metrics-server is installed.
@@ -54,17 +65,19 @@ Open [http://localhost:3000](http://localhost:3000), register an account, and ad
 Run a quick smoke test:
 
 ```sh
+cd ../..
 ./scripts/smoke-test.sh
 ```
 
 Clean up:
 
 ```sh
-kubectl delete -k k8s/overlays/local
+cd terraform/app
+terraform destroy -var-file=local.tfvars.example
 kind delete cluster --name swimlane
 ```
 
-## EKS Terraform
+## EKS and app deployment with Terraform
 
 The Terraform creates a VPC across three AZs, private worker-node subnets, one NAT gateway per AZ, EKS control-plane logging, IRSA, EBS CSI, and a three-node managed node group.
 
@@ -76,15 +89,25 @@ terraform apply
 aws eks update-kubeconfig --region us-east-1 --name swimlane-practical
 ```
 
-Build and push an image to your registry, then update `k8s/overlays/production/kustomization.yaml`:
+Build and push an image to your registry:
 
 ```sh
 docker build -t ghcr.io/<user>/swimlane-devops-practical:1.0.0 .
 docker push ghcr.io/<user>/swimlane-devops-practical:1.0.0
-kubectl apply -k k8s/overlays/production
 ```
 
-For production, replace the demo MongoDB secret literals in `k8s/base/kustomization.yaml` or generate the Secret from your secret manager before applying.
+Deploy the Kubernetes resources with Terraform:
+
+```sh
+cd terraform/app
+cp production.tfvars.example production.tfvars
+# Edit production.tfvars: image, passwords, host, TLS secret.
+terraform init
+terraform plan -var-file=production.tfvars
+terraform apply -var-file=production.tfvars
+```
+
+For production, replace the demo MongoDB password values in `production.tfvars`. Terraform state will contain Kubernetes Secret values, so use an encrypted remote backend for any non-demo deployment.
 
 ## Operational checks
 

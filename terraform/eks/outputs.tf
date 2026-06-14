@@ -14,6 +14,6 @@ output "configure_kubectl" {
 }
 
 output "deploy_application" {
-  description = "Command to deploy the app after pushing an image and updating the production Kustomize image."
-  value       = "kubectl apply -k ../../k8s/overlays/production"
+  description = "Command to deploy the app with Terraform after pushing an image and preparing terraform/app/production.tfvars."
+  value       = "cd ../app && terraform init && terraform apply -var-file=production.tfvars"
 }
