@@ -9,8 +9,7 @@ PF_PID=$!
 trap 'kill ${PF_PID} >/dev/null 2>&1 || true' EXIT
 
 for _ in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:${LOCAL_PORT}/healthz" >/dev/null 2>&1; then
-    curl -fsS "http://127.0.0.1:${LOCAL_PORT}/" >/dev/null
+  if curl -fsS "http://127.0.0.1:${LOCAL_PORT}/" >/dev/null 2>&1; then
     echo "Smoke test passed: http://127.0.0.1:${LOCAL_PORT}"
     exit 0
   fi

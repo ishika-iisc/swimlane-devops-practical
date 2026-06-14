@@ -38,6 +38,11 @@ variable "private_subnets" {
   description = "Private subnet CIDRs, one per AZ."
   type        = list(string)
   default     = ["10.42.1.0/24", "10.42.2.0/24", "10.42.3.0/24"]
+
+  validation {
+    condition     = length(var.private_subnets) >= 2
+    error_message = "private_subnets must contain at least two CIDR blocks for high availability."
+  }
 }
 
 variable "public_subnets" {
@@ -46,10 +51,46 @@ variable "public_subnets" {
   default     = ["10.42.101.0/24", "10.42.102.0/24", "10.42.103.0/24"]
 }
 
+variable "cluster_log_retention_days" {
+  description = "Retention period for EKS control-plane logs."
+  type        = number
+  default     = 30
+}
+
+variable "cluster_endpoint_private_access" {
+  description = "Whether the EKS API endpoint is reachable from inside the VPC."
+  type        = bool
+  default     = true
+}
+
 variable "node_instance_types" {
   description = "EC2 instance types for managed worker nodes."
   type        = list(string)
   default     = ["t3.medium"]
+}
+
+variable "node_ami_type" {
+  description = "AMI type for the EKS managed node group."
+  type        = string
+  default     = "AL2_x86_64"
+}
+
+variable "node_min_size" {
+  description = "Minimum number of worker nodes."
+  type        = number
+  default     = 3
+}
+
+variable "node_max_size" {
+  description = "Maximum number of worker nodes."
+  type        = number
+  default     = 6
+}
+
+variable "node_desired_size" {
+  description = "Desired number of worker nodes."
+  type        = number
+  default     = 3
 }
 
 variable "cluster_endpoint_public_access_cidrs" {

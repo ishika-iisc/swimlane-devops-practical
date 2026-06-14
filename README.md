@@ -1,18 +1,17 @@
 # Swimlane DevOps Practical
 
-This repository dockerizes the Swimlane DevOps practical app and includes Terraform assets to create the Kubernetes infrastructure and deploy the app with MongoDB.
+This repository dockerizes the Swimlane DevOps practical app and includes Terraform assets to create the Kubernetes infrastructure plus Kubernetes YAML/Kustomize manifests to deploy the app with MongoDB.
 
 ## What is included
 
 - `Dockerfile` for the Node.js application.
 - `docker-compose.yml` for local app plus MongoDB validation.
-- `terraform/eks` for a multi-AZ Amazon EKS cluster.
-- `terraform/app` for Terraform-managed Kubernetes resources: app Deployment, MongoDB StatefulSet, Services, HPA, PDBs, NetworkPolicies, and optional Ingress.
-- `k8s/base` and `k8s/overlays` as Kustomize reference manifests.
+- `terraform/eks` for a multi-AZ Amazon EKS cluster using first-party AWS resources, not community modules.
+- `k8s/base` and `k8s/overlays` for Kustomize-managed Kubernetes resources: app Deployment, MongoDB StatefulSet, Services, HPA, PDBs, NetworkPolicies, and optional Ingress.
 - Optional `ansible` and `packer` examples for worker image preparation.
 - `docs/architecture.md` with the cluster and high-availability notes.
 
-The upstream app only requires `MONGODB_URL`. I added `/healthz` so Kubernetes can probe the app cleanly.
+The app is deployed as-is and only needs `MONGODB_URL`.
 
 ## Local Docker test
 
@@ -28,7 +27,7 @@ Clean up:
 docker compose down -v
 ```
 
-## Local Kubernetes deployment with Terraform
+## Local Kubernetes deployment with Kustomize
 
 Use Docker Desktop Kubernetes or kind. If using kind:
 
@@ -42,14 +41,12 @@ Build the local image:
 docker build -t swimlane-devops-practical:local .
 ```
 
-Deploy the application and MongoDB with Terraform:
+Deploy the application and MongoDB with Kustomize:
 
 ```sh
-cd terraform/app
-# If you are not using the kind cluster above, edit kube_context in local.tfvars.example.
-terraform init
-terraform apply \
-  -var-file=local.tfvars.example
+kubectl apply -k k8s/overlays/local
+kubectl -n swimlane rollout status statefulset/mongodb --timeout=180s
+kubectl -n swimlane rollout status deployment/swimlane-app --timeout=180s
 ```
 
 HPA objects require the Kubernetes metrics API. Docker Desktop and kind do not always install metrics-server by default, so `kubectl get hpa` may show `<unknown>` metrics until metrics-server is installed.
@@ -72,14 +69,13 @@ cd ../..
 Clean up:
 
 ```sh
-cd terraform/app
-terraform destroy -var-file=local.tfvars.example
+kubectl delete -k k8s/overlays/local
 kind delete cluster --name swimlane
 ```
 
-## EKS and app deployment with Terraform
+## EKS with Terraform and app deployment with Kustomize
 
-The Terraform creates a VPC across three AZs, private worker-node subnets, one NAT gateway per AZ, EKS control-plane logging, IRSA, EBS CSI, and a three-node managed node group.
+The Terraform creates a VPC across three AZs, private worker-node subnets, one NAT gateway per AZ, EKS control-plane logging, IRSA, EBS CSI, and a three-node managed node group. It uses explicit AWS resources instead of Terraform community modules.
 
 ```sh
 cd terraform/eks
@@ -96,18 +92,13 @@ docker build -t ghcr.io/<user>/swimlane-devops-practical:1.0.0 .
 docker push ghcr.io/<user>/swimlane-devops-practical:1.0.0
 ```
 
-Deploy the Kubernetes resources with Terraform:
+Update the production Kustomize overlay with your image and deploy the Kubernetes resources:
 
 ```sh
-cd terraform/app
-cp production.tfvars.example production.tfvars
-# Edit production.tfvars: image, passwords, host, TLS secret.
-terraform init
-terraform plan -var-file=production.tfvars
-terraform apply -var-file=production.tfvars
+kubectl apply -k k8s/overlays/production
 ```
 
-For production, replace the demo MongoDB password values in `production.tfvars`. Terraform state will contain Kubernetes Secret values, so use an encrypted remote backend for any non-demo deployment.
+For production, replace the demo MongoDB secret literals in `k8s/base/kustomization.yaml` or generate the Secret from your secret manager before applying.
 
 ## Operational checks
 
