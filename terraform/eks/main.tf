@@ -39,6 +39,19 @@ locals {
   ]
 
   oidc_provider = replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")
+
+  cluster_access_entries = merge(
+    {
+      for arn in var.cluster_admin_principal_arns : arn => {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+      }
+    },
+    {
+      for arn in var.cluster_viewer_principal_arns : arn => {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+      }
+    }
+  )
 }
 
 resource "aws_vpc" "this" {
@@ -297,6 +310,30 @@ resource "aws_eks_node_group" "general" {
   depends_on = [
     aws_iam_role_policy_attachment.node
   ]
+}
+
+resource "aws_eks_access_entry" "cluster_principal" {
+  for_each = local.cluster_access_entries
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.key
+  type          = "STANDARD"
+
+  tags = local.tags
+}
+
+resource "aws_eks_access_policy_association" "cluster_principal" {
+  for_each = local.cluster_access_entries
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.key
+  policy_arn    = each.value.policy_arn
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.cluster_principal]
 }
 
 resource "aws_iam_openid_connect_provider" "cluster" {

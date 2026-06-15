@@ -98,3 +98,15 @@ variable "cluster_endpoint_public_access_cidrs" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "cluster_admin_principal_arns" {
+  description = "IAM user or role ARNs that should receive cluster-admin access through EKS access entries."
+  type        = list(string)
+  default     = []
+}
+
+variable "cluster_viewer_principal_arns" {
+  description = "IAM user or role ARNs that should receive read-only Kubernetes visibility through EKS access entries."
+  type        = list(string)
+  default     = []
+}

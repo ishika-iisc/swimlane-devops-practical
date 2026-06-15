@@ -38,6 +38,11 @@ output "oidc_provider_arn" {
   value       = aws_iam_openid_connect_provider.cluster.arn
 }
 
+output "node_role_arn" {
+  description = "IAM role ARN used by the managed node group."
+  value       = aws_iam_role.node.arn
+}
+
 output "configure_kubectl" {
   description = "Command to configure kubectl for this cluster."
   value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.this.name}"

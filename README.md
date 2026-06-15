@@ -85,6 +85,13 @@ terraform apply
 aws eks update-kubeconfig --region us-east-1 --name swimlane-practical
 ```
 
+If you use a different IAM role or user to view the cluster in the AWS console or run `kubectl`, pass it in `cluster_admin_principal_arns` or `cluster_viewer_principal_arns` so Terraform creates the EKS access entry:
+
+```sh
+terraform apply \
+  -var='cluster_admin_principal_arns=["arn:aws:iam::<account-id>:role/<your-admin-role>"]'
+```
+
 Build and push an image to your registry:
 
 ```sh
