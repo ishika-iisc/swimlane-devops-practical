@@ -21,9 +21,14 @@ variable "source_ami_name" {
   default = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-arm64-server-*"
 }
 
+variable "instance_type" {
+  type    = string
+  default = "t4g.small"
+}
+
 source "amazon-ebs" "eks_worker" {
   region        = var.aws_region
-  instance_type = "t4g.medium"
+  instance_type = var.instance_type
   ssh_username  = "ubuntu"
   ami_name      = "swimlane-eks-worker-{{timestamp}}"
 

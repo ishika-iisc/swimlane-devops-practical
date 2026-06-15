@@ -21,4 +21,4 @@ node_min_size       = 2
 node_max_size       = 10
 node_desired_size   = 3
 
-cluster_endpoint_public_access_cidrs = ["134.231.163.196/32"]
+cluster_endpoint_public_access_cidrs = ["134.231.163.196/32", "165.85.169.114/32"]
