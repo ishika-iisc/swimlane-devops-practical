@@ -10,6 +10,7 @@ The production path uses Amazon EKS from `terraform/eks`. The Terraform uses fir
 - An EKS control plane with audit/control-plane logs enabled.
 - A managed node group with three desired nodes across private subnets.
 - EKS add-ons for CoreDNS, kube-proxy, VPC CNI, and EBS CSI.
+- An ECR repository for the application image, with encryption, scan-on-push, and an image lifecycle policy.
 - Optional EKS access entries for IAM principals that need console or `kubectl` access.
 
 For a laptop demo, `kind/swimlane-cluster.yaml` defines a local three-node kind cluster. Docker Desktop Kubernetes also works with the same Kustomize overlays.
@@ -29,6 +30,11 @@ MongoDB is deployed by Kustomize YAML as a containerized StatefulSet with a pers
 - NetworkPolicy limits MongoDB traffic to the app pods and limits app egress to DNS plus MongoDB.
 - The production overlay enables `NODE_ENV=production` and includes a TLS Ingress placeholder.
 - Terraform enables EKS control-plane logs and IRSA.
+- Terraform creates the ECR repository with image scan-on-push enabled.
 - Terraform can grant admin or read-only cluster access through `cluster_admin_principal_arns` and `cluster_viewer_principal_arns`.
+
+## Helm Boundary
+
+This repository uses Kustomize for the Kubernetes application layer. If Helm were used instead, it would package the app Deployment, Services, HPA, PDBs, MongoDB StatefulSet, ConfigMaps, Secrets, NetworkPolicies, and optional Ingress. Terraform should continue to own AWS infrastructure such as VPC, EKS, IAM, EBS CSI permissions, and ECR.
 
 Replace the demo secret values before using this outside a local practical.

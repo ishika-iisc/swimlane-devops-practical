@@ -28,6 +28,16 @@ output "public_subnet_ids" {
   value       = [for key in sort(keys(aws_subnet.public)) : aws_subnet.public[key].id]
 }
 
+output "ecr_repository_name" {
+  description = "ECR repository name for the application image."
+  value       = aws_ecr_repository.app.name
+}
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for Docker image pushes."
+  value       = aws_ecr_repository.app.repository_url
+}
+
 output "node_group_name" {
   description = "EKS managed node group name."
   value       = aws_eks_node_group.general.node_group_name

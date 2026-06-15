@@ -40,6 +40,8 @@ locals {
 
   oidc_provider = replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")
 
+  ecr_repository_name = coalesce(var.ecr_repository_name, var.project_name)
+
   cluster_access_entries = merge(
     {
       for arn in var.cluster_admin_principal_arns : arn => {
@@ -302,8 +304,7 @@ resource "aws_eks_node_group" "general" {
   }
 
   labels = {
-    "node-role.kubernetes.io/worker" = "worker"
-    workload                         = "general"
+    workload = "general"
   }
 
   tags = local.tags

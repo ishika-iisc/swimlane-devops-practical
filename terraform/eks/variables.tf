@@ -99,6 +99,29 @@ variable "cluster_endpoint_public_access_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "ecr_repository_name" {
+  description = "Name of the ECR repository for the application image. Defaults to project_name."
+  type        = string
+  default     = null
+}
+
+variable "ecr_image_tag_mutability" {
+  description = "Image tag mutability for the application ECR repository. Use IMMUTABLE outside quick lab iterations."
+  type        = string
+  default     = "MUTABLE"
+
+  validation {
+    condition     = contains(["MUTABLE", "IMMUTABLE"], var.ecr_image_tag_mutability)
+    error_message = "ecr_image_tag_mutability must be MUTABLE or IMMUTABLE."
+  }
+}
+
+variable "ecr_force_delete" {
+  description = "Whether Terraform can delete the ECR repository even when it contains images."
+  type        = bool
+  default     = false
+}
+
 variable "cluster_admin_principal_arns" {
   description = "IAM user or role ARNs that should receive cluster-admin access through EKS access entries."
   type        = list(string)

@@ -6,7 +6,7 @@ This repository dockerizes the Swimlane DevOps practical app and includes Terraf
 
 - `Dockerfile` for the Node.js application.
 - `docker-compose.yml` for local app plus MongoDB validation.
-- `terraform/eks` for a multi-AZ Amazon EKS cluster using first-party AWS resources, not community modules.
+- `terraform/eks` for a multi-AZ Amazon EKS cluster and ECR repository using first-party AWS resources, not community modules.
 - `k8s/base` and `k8s/overlays` for Kustomize-managed Kubernetes resources: app Deployment, MongoDB StatefulSet, Services, HPA, PDBs, NetworkPolicies, and optional Ingress.
 - Optional `ansible` and `packer` examples for worker image preparation.
 - `docs/architecture.md` with the cluster and high-availability notes.
@@ -75,7 +75,7 @@ kind delete cluster --name swimlane
 
 ## EKS with Terraform and app deployment with Kustomize
 
-The Terraform creates a VPC across three AZs, private worker-node subnets, one NAT gateway per AZ, EKS control-plane logging, IRSA, EBS CSI, and a three-node managed node group. It uses explicit AWS resources instead of Terraform community modules.
+The Terraform creates a VPC across three AZs, private worker-node subnets, one NAT gateway per AZ, EKS control-plane logging, IRSA, EBS CSI, an ECR image repository, and a three-node managed node group. It uses explicit AWS resources instead of Terraform community modules.
 
 ```sh
 cd terraform/eks
@@ -92,20 +92,35 @@ terraform apply \
   -var='cluster_admin_principal_arns=["arn:aws:iam::<account-id>:role/<your-admin-role>"]'
 ```
 
-Build and push an image to your registry:
+Build and push the app image to the ECR repository created by Terraform:
 
 ```sh
-docker build -t ghcr.io/<user>/swimlane-devops-practical:1.0.0 .
-docker push ghcr.io/<user>/swimlane-devops-practical:1.0.0
+export ECR_REPOSITORY_URL="$(terraform -chdir=terraform/eks output -raw ecr_repository_url)"
+export IMAGE="${ECR_REPOSITORY_URL}:1.0.0"
+
+aws ecr get-login-password --region us-east-1 \
+  | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URL%/*}"
+
+docker buildx build --platform linux/amd64 -t "${IMAGE}" --push .
 ```
 
 Update the production Kustomize overlay with your image and deploy the Kubernetes resources:
 
 ```sh
+cd k8s/overlays/production
+kustomize edit set image swimlane-devops-practical="${IMAGE}"
+cd ../../..
+
 kubectl apply -k k8s/overlays/production
 ```
 
 For production, replace the demo MongoDB secret literals in `k8s/base/kustomization.yaml` or generate the Secret from your secret manager before applying.
+
+## Helm scope
+
+This repo currently deploys Kubernetes resources with Kustomize. A Helm chart could own the same Kubernetes app layer: Namespace, ConfigMaps, Secrets, ServiceAccount, app Deployment, app Service, HPA, PDBs, MongoDB StatefulSet and volume claim template, MongoDB Service, NetworkPolicies, and optional Ingress/TLS settings.
+
+Terraform should continue to own AWS infrastructure: VPC, subnets, NAT gateways, EKS, IAM roles/policies, EKS access entries, IRSA, EBS CSI permissions, and ECR.
 
 ## Operational checks
 
