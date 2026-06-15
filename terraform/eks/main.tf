@@ -302,7 +302,8 @@ resource "aws_eks_node_group" "general" {
   }
 
   labels = {
-    workload = "general"
+    "node-role.kubernetes.io/worker" = "worker"
+    workload                         = "general"
   }
 
   tags = local.tags
