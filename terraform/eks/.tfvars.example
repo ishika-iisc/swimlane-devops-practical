@@ -17,6 +17,11 @@ cluster_log_retention_days      = 30
 cluster_endpoint_private_access = true
 cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]  # Restrict in production
 
+# ECR Repository Configuration
+ecr_repository_name       = "swimlane-practical"
+ecr_image_tag_mutability  = "MUTABLE"
+ecr_force_delete          = false
+
 # Node Group Configuration
 node_instance_types = ["t3.medium"]
 node_ami_type       = "AL2_x86_64"

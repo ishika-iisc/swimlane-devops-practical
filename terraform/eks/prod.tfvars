@@ -1,7 +1,7 @@
-aws_region     = "us-east-1"
-project_name   = "swimlane-practical"
-environment    = "prod"
-cluster_name   = "swimlane-practical-prod"
+aws_region      = "us-east-1"
+project_name    = "swimlane-practical"
+environment     = "prod"
+cluster_name    = "swimlane-practical-prod"
 cluster_version = "1.35"
 
 vpc_cidr        = "10.150.0.0/16"
@@ -10,6 +10,10 @@ public_subnets  = ["10.150.101.0/24", "10.150.102.0/24", "10.150.103.0/24"]
 
 cluster_log_retention_days      = 90
 cluster_endpoint_private_access = true
+
+ecr_repository_name      = "swimlane-practical-prod"
+ecr_image_tag_mutability = "IMMUTABLE"
+ecr_force_delete         = false
 
 node_instance_types = ["t3.small"]
 node_ami_type       = "AL2023_x86_64_STANDARD"

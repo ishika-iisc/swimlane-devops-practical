@@ -80,15 +80,16 @@ The Terraform creates a VPC across three AZs, private worker-node subnets, one N
 ```sh
 cd terraform/eks
 terraform init
-terraform plan
-terraform apply
-aws eks update-kubeconfig --region us-east-1 --name swimlane-practical
+terraform plan -var-file=prod.tfvars
+terraform apply -var-file=prod.tfvars
+aws eks update-kubeconfig --region us-east-1 --name swimlane-practical-prod
 ```
 
 If you use a different IAM role or user to view the cluster in the AWS console or run `kubectl`, pass it in `cluster_admin_principal_arns` or `cluster_viewer_principal_arns` so Terraform creates the EKS access entry:
 
 ```sh
 terraform apply \
+  -var-file=prod.tfvars \
   -var='cluster_admin_principal_arns=["arn:aws:iam::<account-id>:role/<your-admin-role>"]'
 ```
 
@@ -96,7 +97,8 @@ Build and push the app image to the ECR repository created by Terraform:
 
 ```sh
 export ECR_REPOSITORY_URL="$(terraform -chdir=terraform/eks output -raw ecr_repository_url)"
-export IMAGE="${ECR_REPOSITORY_URL}:1.0.0"
+export IMAGE_TAG="$(git rev-parse --short HEAD)"
+export IMAGE="${ECR_REPOSITORY_URL}:${IMAGE_TAG}"
 
 aws ecr get-login-password --region us-east-1 \
   | docker login --username AWS --password-stdin "${ECR_REPOSITORY_URL%/*}"
